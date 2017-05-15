@@ -18,6 +18,11 @@ public class CallTree {
     private CallNode root;
 
     /**
+     * The thread in which the methods are being called.
+     */
+    private Thread thread;
+
+    /**
      * The CallTree's iterator.
      * Helps to traverse the tree.
      */
@@ -32,10 +37,12 @@ public class CallTree {
      * Constructor.
      * @param rootMethod The method's name of the root node's call.
      * @param rootArg The argument of the root node's call.
+     * @param thread The thread in which the methods are being called.
      */
-    public CallTree(String rootMethod, String rootArg) {
+    public CallTree(String rootMethod, String rootArg, Thread thread) {
         root = new CallNode(rootMethod, rootArg, null);
         iterator = new Iterator(root);
+        this.thread = thread;
     }
 
     /**
@@ -44,6 +51,14 @@ public class CallTree {
      */
     public CallNode getRoot() {
         return root;
+    }
+
+    /**
+     * Returns the thread in which the methods are being called.
+     * @return The thread in which the methods are being called.
+     */
+    public Thread getThread() {
+        return thread;
     }
 
     /**

@@ -4,10 +4,9 @@
 
 package org.jetbrains.test;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Nikolay.Tropin
@@ -16,9 +15,15 @@ import java.util.Random;
 public class DummyApplication {
 
     /**
+     * The map which matches the thread and the number of tasks in it.
+     * We needn't use AtomicInteger there, because each thread will change only its own amount.
+     */
+    private static ConcurrentMap<Thread, Integer> threadsTasksAmountsMap = new ConcurrentHashMap<>();
+
+    /**
      * The map which matches the DummyApplication instances and the trees of calls.
      */
-    private static Map<DummyApplication, CallTree> callTreeMap = new HashMap<>();
+    private static ConcurrentMap<DummyApplication, CallTree> callTreeMap = new ConcurrentHashMap<>();
 
     private final List<String> args;
 
@@ -29,10 +34,18 @@ public class DummyApplication {
     }
 
     /**
+     * Returns the map which matches the thread and the number of tasks in it.
+     * @return The map which matches the thread and the number of tasks in it.
+     */
+    public static ConcurrentMap<Thread, Integer> getThreadsTasksAmountsMap() {
+        return threadsTasksAmountsMap;
+    }
+
+    /**
      * Returns the map which matches the DummyApplication instances and the trees of calls.
      * @return The map which matches the DummyApplication instances and the trees of calls.
      */
-    public static Map<DummyApplication, CallTree> getCallTreeMap() {
+    public static ConcurrentMap<DummyApplication, CallTree> getCallTreeMap() {
         return callTreeMap;
     }
 
@@ -64,9 +77,8 @@ public class DummyApplication {
      * @param arg The argument of the method's call.
      */
     private void preHandleCall(String method, Object arg) {
-        CallTree callTree = callTreeMap.get(this);
-        if(callTree == null) {
-            callTreeMap.put(this, new CallTree(method, arg.toString()));
+        CallTree callTree = null;
+        if((callTree = callTreeMap.putIfAbsent(this, new CallTree(method, arg.toString(), Thread.currentThread()))) == null) {
             return;
         }
 
@@ -138,6 +150,13 @@ public class DummyApplication {
     }
 
     public void start() {
+        Integer lastAmount;
+        if((lastAmount = threadsTasksAmountsMap.putIfAbsent(Thread.currentThread(), 1)) != null) {
+            threadsTasksAmountsMap.replace(Thread.currentThread(), lastAmount + 1);
+        } // We can do this and don't use contains() or get(), because the complexity of putIfAbsent() is approximately equal to
+          // the complexities of contains() and get() (the complexity of assigning new value for found map entry is O(1)),
+          // but using only putIfAbsent() and replace() allows to write more readable code.
+
         abc(nextArg());
     }
 }

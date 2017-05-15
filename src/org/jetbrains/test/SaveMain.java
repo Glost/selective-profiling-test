@@ -9,7 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -49,13 +49,21 @@ public class SaveMain {
 
         File file = new File(fileName);
         try (DataOutputStream dataOutputStream = new DataOutputStream(Files.newOutputStream(file.toPath()))) {
-            Map<DummyApplication, CallTree> callTreeMap = DummyApplication.getCallTreeMap();
-            dataOutputStream.writeInt(N_TASKS);
-            int task = 0;
-            for(Map.Entry<DummyApplication, CallTree> entry : callTreeMap.entrySet()) {
-                CallTreeOperations.saveCallTreeToFile(entry.getValue(), dataOutputStream);
-                System.out.println("Task " + (task++) + ":");
-                CallTreeOperations.printCallTree(entry.getValue());
+            ConcurrentMap<Thread, Integer> threadsTasksAmountsMap = DummyApplication.getThreadsTasksAmountsMap();
+            ConcurrentMap<DummyApplication, CallTree> callTreeMap = DummyApplication.getCallTreeMap();
+            dataOutputStream.writeInt(threadsTasksAmountsMap.size());
+            int thread = 0;
+            for(ConcurrentMap.Entry<Thread, Integer> threadsEntry : threadsTasksAmountsMap.entrySet()) {
+                dataOutputStream.writeInt(threadsEntry.getValue());
+                int task = 0;
+                for(ConcurrentMap.Entry<DummyApplication, CallTree> entry : callTreeMap.entrySet()) {
+                    if(entry.getValue().getThread() == threadsEntry.getKey()) {
+                        CallTreeOperations.saveCallTreeToFile(entry.getValue(), dataOutputStream);
+                        System.out.println("Task " + (task++) + " in thread " + thread + ":");
+                        CallTreeOperations.printCallTree(entry.getValue());
+                    }
+                }
+                thread++;
             }
             System.out.println("File has been successfully written.");;
         } catch (IOException e) {

@@ -91,13 +91,14 @@ public class CallTreeOperations {
      * @return The tree's node which was read from the file.
      * @throws IOException If some problem during reading from the file happened.
      */
-    public static CallTree.CallNode readCallNodeFromFile(DataInputStream dataInputStream, CallTree.CallNode parent) throws IOException {
+    private static CallTree.CallNode readCallNodeFromFile(DataInputStream dataInputStream, CallTree.CallNode parent) throws IOException {
         String method = dataInputStream.readUTF();
         String arg = dataInputStream.readUTF();
 
         CallTree.CallNode callNode = null;
         if(parent == null) {
-            CallTree callTree = new CallTree(method, arg);
+            CallTree callTree = new CallTree(method, arg, Thread.currentThread()); // The Thread instance is not important
+                                                                                   // when we are reading the tree from the file.
             callNode = callTree.getRoot();
         } else {
             parent.addChild(method, arg);

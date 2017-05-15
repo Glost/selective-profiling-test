@@ -23,11 +23,14 @@ public class ReadMain {
 
         File file = new File(fileName);
         try (DataInputStream dataInputStream = new DataInputStream(Files.newInputStream(file.toPath()))) {
-            int tasks = dataInputStream.readInt();
-            for(int task = 0; task < tasks; task++) {
-                CallTree callTree = CallTreeOperations.readCallTreeFromFile(dataInputStream);
-                System.out.println("Task " + task + ":");
-                CallTreeOperations.printCallTree(callTree);
+            int threads = dataInputStream.readInt();
+            for(int thread = 0; thread < threads; thread++) {
+                int tasks = dataInputStream.readInt();
+                for(int task = 0; task < tasks; task++) {
+                    CallTree callTree = CallTreeOperations.readCallTreeFromFile(dataInputStream);
+                    System.out.println("Task " + task + " in thread " + thread + ":");
+                    CallTreeOperations.printCallTree(callTree);
+                }
             }
         } catch (IOException e) {
             System.out.println("Sorry, there is some problem with reading the file: " + e.getMessage() +

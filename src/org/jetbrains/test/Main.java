@@ -6,6 +6,7 @@ package org.jetbrains.test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -38,11 +39,18 @@ public class Main {
 
         }
 
-        Map<DummyApplication, CallTree> callTreeMap = DummyApplication.getCallTreeMap();
-        int task = 0;
-        for(Map.Entry<DummyApplication, CallTree> entry : callTreeMap.entrySet()) {
-            System.out.println("Task " + (task++) + ":");
-            CallTreeOperations.printCallTree(entry.getValue());
+        ConcurrentMap<Thread, Integer> threadsTasksAmountsMap = DummyApplication.getThreadsTasksAmountsMap();
+        ConcurrentMap<DummyApplication, CallTree> callTreeMap = DummyApplication.getCallTreeMap();
+        int thread = 0;
+        for(ConcurrentMap.Entry<Thread, Integer> threadsEntry : threadsTasksAmountsMap.entrySet()) {
+            int task = 0;
+            for(ConcurrentMap.Entry<DummyApplication, CallTree> entry : callTreeMap.entrySet()) {
+                if(entry.getValue().getThread() == threadsEntry.getKey()) {
+                    System.out.println("Task " + (task++) + " in thread " + thread + ":");
+                    CallTreeOperations.printCallTree(entry.getValue());
+                }
+            }
+            thread++;
         }
     }
 }
